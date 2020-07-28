@@ -41,8 +41,26 @@
                     <div class="form-group">
                       <input type="password" class="form-control form-control-user" id="inputPassword" placeholder="密碼">
                     </div>
+                    <div class="form-group">
+                      <div class = "row">
+                        <!-- <label class="col-form-label col-md-2">驗證碼</label> -->
+                        <div class="col-md-4">
+
+                          <input class="form-control form-control-user input-sm" required="" id="inputVerification" placeholder="" type="text">
+                        </div>
+                        <div class="col-md-3">
+                          <img src="/verification" id="imgVerification" title="看不清，點選換一張"class="rounded float-left">
+                        </div>
+                        <div class="col-md-3 center">
+                          <!-- </br> -->
+                          <a class="my-2" href="javascript:changeCode()">看不清，</br>換一張</a>
+                          
+                        </div>
+                      </div>
+                        
+                    </div>
                    
-                    <a href="/home" class="btn btn-primary btn-user btn-block" id="btnLogin">
+                    <a href="#" class="btn btn-primary btn-user btn-block" id="btnLogin">
                       登入
                     </a>
                   <div class="text-center">
@@ -92,29 +110,37 @@
 
 </html>
 <script type='text/javascript'>
+function changeCode() {
+    $("#imgVerification").attr("src","/verification");
+}
 $(function(){
   $('input').on('keyup',function(e){
-    if(e.keyCode===13)
-      $("button[name=loginButton]").click();
+    if(e.keyCode===13){
+      $("#btnLogin").click();
+    }
   });
-  $("button[name=loginButton]").on('click', function(){
-
-    var account = $('[name=inputAccount]').val();
-    var password = $('[name=inputPassword]').val();
+  $("#btnLogin").on('click', function(){
+    
+    var account = $('#inputAccount').val();
+    var password = $('#inputPassword').val();
+    var verificationNum = $('#inputVerification').val();
+    console.log(password);
 
     $.ajax({
       url:'/user/login',
       type:'POST',
       data:{data:JSON.stringify({
           account: account,
-          password: password
+          password: password,
+          verification : verificationNum
       })},
       success:function(data){
+        changeCode();
         if(data.status=='success'){
           window.location.href='/'; 
         }else{
           $('#basicModal .modal-title').text('錯誤');
-          $('#basicModal .modal-body').text('帳號或密碼錯誤');
+          $('#basicModal .modal-body').text(data.text);
           $('#basicModal').modal('show');
         }
       },

@@ -58,30 +58,31 @@ $container['ViewMiddleware'] = function($container) {
 $container['upload_directory'] = __DIR__ . '/../uploads';
 
 
-// class ViewMiddleware
-// {
-// 	private $conn;
-// 	function __construct($db){
-// 		$this->conn = $db;
-// 	}
-//     public function __invoke($request, $response, $next)
-//     {
-//     	if(isset($_SESSION['id'])){
-//     		$user = new User($this->conn);
-// 	    	$name = $user->getName();
-//     		$viewParam = array();
-// 	    	if(count($name)==1){
-// 	    		$viewParam['name'] = $name[0]['staff_name'];
-// 	    	}
-//     		$request = $request->withAttribute('viewParam', $viewParam);
-//         	$response = $next($request, $response);
-//     	}
-//     	else{
-// 			return $response->withRedirect('/login', 301);
-//     	}
-//         return $response;
-//     }
-// }
+class ViewMiddleware
+{
+	private $conn;
+	function __construct($db){
+		$this->conn = $db;
+	}
+    public function __invoke($request, $response, $next)
+    {
+    	if(isset($_SESSION['id'])){
+    		$user = new User($this->conn);
+	    	$name = $user->getName();
+    		$viewParam = array();
+	    	if(count($name)==1){
+	    		// var_dump($name[0]['name']);
+	    		$viewParam['name'] = $name[0]['name'];
+	    	}
+    		$request = $request->withAttribute('viewParam', $viewParam);
+        	$response = $next($request, $response);
+    	}
+    	else{
+			return $response->withRedirect('/login', 301);
+    	}
+        return $response;
+    }
+}
 
 
 $app->group('', function () use ($app) {
@@ -90,34 +91,42 @@ $app->group('', function () use ($app) {
 			return $response->withRedirect('/home', 301);
 		});
 		$app->get('/home', function (Request $request, Response $response, array $args) {
-			// $viewParam = $request->getAttribute('viewParam');
-			return $this->view->render($response, '/function.php',[]);
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/index.php',$viewParam);
 		});
 		$app->get('/function', function (Request $request, Response $response, array $args) {
-			// $viewParam = $request->getAttribute('viewParam');
-			return $this->view->render($response, '/function.php',[]);
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/function.php',$viewParam);
 		});
 		$app->get('/handMade', function (Request $request, Response $response, array $args) {
-			// $viewParam = $request->getAttribute('viewParam');
-			return $this->view->render($response, '/handMade.php',[]);
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/handMade.php',$viewParam);
 		});
 		$app->get('/autoMade', function (Request $request, Response $response, array $args) {
-			// $viewParam = $request->getAttribute('viewParam');
-			return $this->view->render($response, '/autoMade.php',[]);
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/autoMade.php',$viewParam);
 		});
 		$app->get('/testPaperManage', function (Request $request, Response $response, array $args) {
-			// $viewParam = $request->getAttribute('viewParam');
-			return $this->view->render($response, '/testPaperManage.php',[]);
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/testPaperManage.php',$viewParam);
 		});
 		$app->get('/makeTest', function (Request $request, Response $response, array $args) {
-			// $viewParam = $request->getAttribute('viewParam');
-			return $this->view->render($response, '/makeTest.php',[]);
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/makeTest.php',$viewParam);
 		});
 		$app->get('/upload', function (Request $request, Response $response, array $args) {
-			// $viewParam = $request->getAttribute('viewParam');
-			return $this->view->render($response, '/upload.php',[]);
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/upload.php',$viewParam);
 		});
-	});
+		$app->get('/table', function (Request $request, Response $response, array $args) {
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/table.php',$viewParam);
+		});
+		$app->get('/userGuide', function (Request $request, Response $response, array $args) {
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/userGuide.php',$viewParam);
+		});
+	})->add('ViewMiddleware');
 	$app->get('/login', function (Request $request, Response $response, array $args) {
 		session_destroy();
 		session_start();
@@ -127,8 +136,39 @@ $app->group('', function () use ($app) {
 		
 		return $this->view->render($response, '/register.php', []);
 	});
+	$app->get('/verification', function (Request $request, Response $response, array $args) {
+		
+		return $this->view->render($response, '/verification.php', []);
+	});
 });
+
 $app->group('/user', function () use ($app) {
+	$app->get('/id/{type}', function (Request $request, Response $response, array $args) {
+	    $user = new User($this->db);
+	    $result = $user->getID($args['type']);
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+
+	$app->get('/name', function (Request $request, Response $response, array $args) {
+	    $user = new User($this->db);
+	    $result = $user->getName();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->delete('/{id}', function (Request $request, Response $response, array $args) {
+	    $user = new User($this->db);
+	    $result = $user->deleteUser($args['id']);
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+
 	$app->post('/login', function (Request $request, Response $response, array $args) {
 	    $user = new User($this->db);
 	    $result = $user->login();
@@ -136,6 +176,68 @@ $app->group('/user', function () use ($app) {
 		$response = $response->withJson($result);
 		// echo $response;
 	    return $response;
+	});
+	$app->patch('/changePassword', function (Request $request, Response $response, array $args) {
+	    $user = new User($this->db);
+	    $result = $user->changePassword();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->patch('/logout', function (Request $request, Response $response, array $args) {
+	    return $response;
+	});
+
+	$app->get('/function', function (Request $request, Response $response, array $args) {
+	    $user = new User($this->db);
+	    $result = $user->getFunction();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+
+	$app->get('/getTable', function (Request $request, Response $response, array $args) {
+	    $user = new User($this->db);
+	    $result = $user->getInfo();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->get('/profile/{id}', function (Request $request, Response $response, array $args) {
+	    $user = new User($this->db);
+	    $result = $user->getProfile($args['id']);
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->get('/info/{id}', function (Request $request, Response $response, array $args) {
+	    $user = new User($this->db);
+	    $result = $user->getInfo($args['id']);
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->group('/verificationPic', function () use ($app) {
+		$app->get('', function (Request $request, Response $response, array $args) {
+		    $user = new User($this->db);
+		    $result = $user->getVerificationPic();
+		    
+			 $file = __DIR__  . "/aaa.png";
+		    if (!file_exists($file)) {
+		        die("file:$file");
+		    }
+		    $image = file_get_contents($file);
+		    if ($image === false) {
+		        die("error getting image");
+		    }
+		    $response->write($image);
+		    return $response->withHeader('Content-Type', 'image/png');
+		});
 	});
 	$app->group('/register', function () use ($app) {
 		$app->post('', function (Request $request, Response $response, array $args) {
@@ -146,14 +248,56 @@ $app->group('/user', function () use ($app) {
 			// echo $response;
 		    return $response;
 		});
-		$app->post('/check', function (Request $request, Response $response, array $args) {
-		    $staff = new Staff($this->db);
-		    $result = $staff->testcheckRegister();
+		$app->patch('', function (Request $request, Response $response, array $args) {
+		    $user = new User($this->db);
+		    $result = $user->modify();
 		    $response = $response->withHeader('Content-type', 'application/json' );
 			$response = $response->withJson($result);
 			// echo $response;
 		    return $response;
 		});
+		$app->post('/check', function (Request $request, Response $response, array $args) {
+		    $user = new User($this->db);
+		    $result = $user->testcheckRegister();
+		    $response = $response->withHeader('Content-type', 'application/json' );
+			$response = $response->withJson($result);
+			// echo $response;
+		    return $response;
+		});
+	});
+});
+$app->group('/test', function () use ($app) {
+	$app->get('/unit/{chapterID}', function (Request $request, Response $response, array $args) {
+	    $test = new Test($this->db);
+	    $result = $test->getUnit($args['chapterID']);
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->get('/unitName/{unitID}', function (Request $request, Response $response, array $args) {
+	    $test = new Test($this->db);
+	    $result = $test->getUnitName($args['unitID']);
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->get('/chapter/{bookID}', function (Request $request, Response $response, array $args) {
+	    $test = new Test($this->db);
+	    $result = $test->getChapter($args['bookID']);
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->get('/book', function (Request $request, Response $response, array $args) {
+	    $test = new Test($this->db);
+	    $result = $test->getBook();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
 	});
 });
 $app->run();
