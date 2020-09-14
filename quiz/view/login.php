@@ -48,9 +48,10 @@
 
                           <input class="form-control form-control-user input-sm" required="" id="inputVerification" placeholder="" type="text">
                         </div>
-                        <div class="col-md-3">
-                          <img src="/verification" id="imgVerification" title="看不清，點選換一張"class="rounded float-left">
+                        <div class="col-md-4">
+                          <img src="/verification" id="imgVerification" title="看不清，點選換一張"class="img-fluid rounded float-left">
                         </div>
+                       
                         <div class="col-md-3 center">
                           <!-- </br> -->
                           <a class="my-2" href="javascript:changeCode()">看不清，</br>換一張</a>

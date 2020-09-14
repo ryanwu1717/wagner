@@ -41,7 +41,7 @@
                 <div class="form-group row">
                   <label class="col-form-label col-md-2">帳號</label>
                   <div class="col-md-8">
-                    <input class="form-control form-control-user" required="" name="inputAccount" placeholder="ex.wangshaomay1111" type="email">
+                    <input class="form-control form-control-user" required="" name="inputAccount" placeholder="ex.wangshaomay@gmail.com" type="email">
                   </div>
                 </div>
                 <div class="form-group row" id="rowPassword">

@@ -267,6 +267,14 @@ $app->group('/user', function () use ($app) {
 	});
 });
 $app->group('/test', function () use ($app) {
+	$app->post('', function (Request $request, Response $response, array $args) {
+	    $test = new Test($this->db);
+	    $result = $test->addTest();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
 	$app->get('/unit/{chapterID}', function (Request $request, Response $response, array $args) {
 	    $test = new Test($this->db);
 	    $result = $test->getUnit($args['chapterID']);
@@ -275,9 +283,9 @@ $app->group('/test', function () use ($app) {
 		// echo $response;
 	    return $response;
 	});
-	$app->get('/unitName/{unitID}', function (Request $request, Response $response, array $args) {
+	$app->patch('/selectunit', function (Request $request, Response $response, array $args) {
 	    $test = new Test($this->db);
-	    $result = $test->getUnitName($args['unitID']);
+	    $result = $test->getselectUnit();
 	    $response = $response->withHeader('Content-type', 'application/json' );
 		$response = $response->withJson($result);
 		// echo $response;
@@ -294,6 +302,32 @@ $app->group('/test', function () use ($app) {
 	$app->get('/book', function (Request $request, Response $response, array $args) {
 	    $test = new Test($this->db);
 	    $result = $test->getBook();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->post('/checkSecondPage', function (Request $request, Response $response, array $args) {
+	    $test = new Test($this->db);
+	    $result = $test->checkSecondPage();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->post('/checkQuestion', function (Request $request, Response $response, array $args) {
+	    $test = new Test($this->db);
+	    $result = $test->checkQuestion();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+});
+$app->group('/question', function () use ($app) {
+	$app->get('/{unitID}/{source}', function (Request $request, Response $response, array $args) {
+	    $question = new Question($this->db);
+	    $result = $question->getQuestion($args['unitID'],$args['source']);
 	    $response = $response->withHeader('Content-type', 'application/json' );
 		$response = $response->withJson($result);
 		// echo $response;

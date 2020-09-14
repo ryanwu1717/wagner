@@ -68,6 +68,7 @@ $('#logoutModal').on('show.bs.modal',function(e){
   var type = $(e.relatedTarget).data('type');
   console.log(type);
   if(type=='logout'){
+
     logout();
   }else if(type=='modifyPassword'){
     modifyPassword();
@@ -138,13 +139,19 @@ function modifyPassword(){
   });
     
 }
+
+
 function logout(){
+        console.log('in');
+  
   $('#logoutModal .modal-title').html('登出');
-  $('#exampleModal .modal-body').html(`確定登出？`);
-  $('#exampleModal .modal-footer').append(`<button class="btn btn-secondary" type="button" data-dismiss="modal">取消</button>
-          <a class="btn btn-primary" href="#" id="btnLogout">登出</a>`);
+  $('#logoutModal .modal-body').html(`確定登出？`);
+  $('#logoutModal .modal-footer').html(`<button class="btn btn-secondary" type="button" data-dismiss="modal">取消</button>
+          <button class="btn btn-primary"  id="btnLogout" >登出</button>`);
   
   $('#btnLogout').unbind().on('click',function(){
+    console.log('inlogout');
+
     $.ajax({
       url:'/user/logout',
       type:'patch',
@@ -152,7 +159,8 @@ function logout(){
         
       }),_METHOD:'PATCH'},
       success:function(response){
-        // console.log(response);
+        console.log('responselogout');
+
         window.location.href='/login'; 
       }
     });
@@ -181,7 +189,7 @@ $(function(){
         $(response).each(function(){
           // console.log(this.name);
           $('#navbarFunction').append(`
-            <li class="nav-item active">
+            <li class="nav-item">
               <a class="nav-link" href="${this.href}">
               <i class="fas fa-fw fa-tachometer-alt"></i>
               <span>${this.name}</span></a>

@@ -381,10 +381,7 @@ Class User{
         //但 $standard_G_2 僅允許 "stanley543ok@myweb.com" ，字串內不包含 .(點)和 -(中線)
         $standard_G_1 = "/^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/";
         $standard_G_2 = "/^[\w]*@[\w-]+(\.[\w-]+)+$/" ;
-        //下面則是個簡單的範例，大家可以嘗試看看
-        $standard_G_1 = "/^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/";
-
-        $standard_G_2 = "/^[\w]*@[\w-]+(\.[\w-]+)+$/" ;
+       
         //echo ($this -> checkString($input, $standard_F));
    		switch ($field) {
    			case '中文名字':
@@ -407,12 +404,16 @@ Class User{
 				if(count($row)>0){
 					return $field."已被使用";
 				}
-   				if($this -> checkString($input, $standard_A) == 1||$this -> checkString($input, $standard_D) == 1||$this -> checkString($input, $standard_E) == 1){
-					return "success";
-
-				}else{
+				// echo $name_len;
+   				if(($this -> checkString($input, $standard_G_1)) == 0){
 					return $field."不符合格式";
 				}
+   	// 			if($this -> checkString($input, $standard_A) == 1||$this -> checkString($input, $standard_D) == 1||$this -> checkString($input, $standard_E) == 1){
+				// 	return "success";
+
+				// }else{
+				// 	return $field."不符合格式";
+				// }
    				return "success";
    			
 			case '電話':
@@ -485,6 +486,139 @@ Class Test{
 	function __construct($db){
 		$this->conn = $db;
 	}
+
+	 public function checkQ($field,$input){
+   		if(empty($input)){
+   			
+   			if($input != 0 ){
+   				return $field."不得為空";
+   			}
+
+   		}
+
+   		return 'success';
+   	}
+
+   	function addTest(){
+		$_POST=json_decode($_POST['data'],true);
+		$tmp = $_POST['questionType'];
+		$sql ='INSERT INTO `etest`.`test`(`school`,`department`,`name`,`size`,`file`,`UID`)
+				VALUES(:school,:department,:name,:size,:file,:UID);';
+		$sth = $this->conn->prepare($sql);
+	   	$sth->bindParam(':school',$tmp['schoolName']);
+	   	$sth->bindParam(':department',$tmp['DepartmentName']);
+	   	$sth->bindParam(':name',$tmp['testName']);
+	   	$sth->bindParam(':size',$tmp['testSize']);
+	   	$sth->bindParam(':file',$tmp['fileName']);
+	   	$sth->bindParam(':UID',$_SESSION['id']);
+		$sth->execute();
+		$tmpID = $this->conn->lastInsertId();
+		foreach ($_POST['question'] as $value) {
+	        $sql ='INSERT INTO `etest`.`testQuestion`(`testID`,`questionID`)
+					VALUES(:testID,:questionID);';
+			$sth = $this->conn->prepare($sql);
+		   	$sth->bindParam(':testID',$tmpID);
+		   	$sth->bindParam(':questionID',$value);
+			$sth->execute();
+	    }
+	    $ack = array(
+	    	'id' => $tmpID
+	    );
+   		return $ack;
+   	}
+
+	function checkQuestion(){
+		$_POST=json_decode($_POST['data'],true);
+		// $unit = $this -> checkQ('選擇單元',$_POST['unit']['selectUnit']);
+		$DepartmentName = $this -> checkQ('科系名稱',$_POST['questionType']['DepartmentName']);
+		$askNum = $this -> checkQ('問答題數',$_POST['questionType']['askNum']);
+		$askScore = $this -> checkQ('問答分數',$_POST['questionType']['askScore']);
+		$chooseNum = $this -> checkQ('選擇題數',$_POST['questionType']['chooseNum']);
+		$chooseScore = $this -> checkQ('選擇分數',$_POST['questionType']['chooseScore']);
+		$fillNum = $this -> checkQ('填充題數',$_POST['questionType']['fillNum']);
+		$fillScore = $this -> checkQ('填充分數',$_POST['questionType']['fillScore']);
+		$fileName = $this -> checkQ('檔案名稱',$_POST['questionType']['fileName']);
+		$questionContent = $this -> checkQ('選擇題型',$_POST['questionType']['questionContent']);
+		$schoolName = $this -> checkQ('學校名稱',$_POST['questionType']['schoolName']);
+		$testName = $this -> checkQ('試卷名稱',$_POST['questionType']['testName']);
+		$testSize = $this -> checkQ('試卷尺寸',$_POST['questionType']['testSize']);
+
+		if($_POST['questionType']['chooseNum'] < $_POST['checkChoose']){
+			$chooseNum = '多選'.($_POST['checkChoose']-$_POST['questionType']['chooseNum']).'題';
+		}else if($_POST['questionType']['chooseNum'] > $_POST['checkChoose']){
+			$chooseNum = '需再選'.($_POST['questionType']['chooseNum']-$_POST['checkChoose']).'題';
+
+		}
+
+		if($_POST['questionType']['fillNum'] < $_POST['checkFill']){
+			$fillNum = '多選'.($_POST['checkFill']-$_POST['questionType']['fillNum']).'題';
+		}else if($_POST['questionType']['fillNum'] > $_POST['checkFill']){
+			$fillNum = '需再選'.($_POST['questionType']['fillNum']-$_POST['checkFill']).'題';
+
+		}
+
+		if($_POST['questionType']['askNum'] < $_POST['checkAsk']){
+			$askNum = '多選'.($_POST['checkAsk']-$_POST['questionType']['askNum']).'題';
+		}else if($_POST['questionType']['askNum'] > $_POST['checkAsk']){
+			$askNum = '需再選'.($_POST['questionType']['askNum']-$_POST['checkAsk']).'題';
+
+		}
+
+
+		$ack = array(
+			// '選擇單元' => $unit,
+			'科系名稱' => $DepartmentName,
+			'選擇題數' => $chooseNum,
+			'選擇分數' => $chooseScore,
+			'填充題數' => $fillNum,
+			'填充分數' => $fillScore,
+			'問答題數' => $askNum,
+			'問答分數' => $askScore,
+			'檔案名稱' => $fileName,
+			'選擇題型' => $questionContent,
+			'學校名稱' => $schoolName,
+			'試卷名稱' => $testName,
+			'試卷尺寸' => $testSize
+		);
+
+		return $ack;
+	}
+
+
+
+	function getselectUnit(){
+		$_POST=json_decode($_POST['data'],true);
+		$unit = $chapter = array();
+
+		foreach ($_POST['unit'] as $value) {
+		    $sql ='SELECT  `unit`.*,`chapter`.`name` as `chapterName`
+					FROM `etest`.`unit` as `unit`
+					LEFT JOIN(
+						SELECT *
+						FROM `etest`.`chapter`
+					)AS `chapter`ON `chapter`.`id` =`unit`.`chapterID`
+					WHERE  `unit`.`id` = :id
+					;';
+			$sth = $this->conn->prepare($sql);
+		   	$sth->bindParam(':id',$value);
+			$sth->execute();
+			$row = $sth->fetchAll();
+		
+		    if(!array_key_exists($row[0]['chapterID'], $chapter)){
+		    	// var_dump('in');
+		    	$chapter[$row[0]['chapterID']]= $row[0]['chapterName'];
+		    }
+		    array_push($unit,  $row[0]);
+
+		}
+		$ack = array(
+			'chapter' => $chapter,
+			'unit' => $unit
+		);
+		return($ack);
+
+	}
+
 	function getChapter($bookID){
 		$sql ='SELECT * FROM etest.chapter WHERE bookID=:bookID;';
 		$sth = $this->conn->prepare($sql);
@@ -539,5 +673,226 @@ Class Test{
 		// var_dump($_SESSION['id']);
 		return $row;
 	}
+
+	function checkSecondPage(){
+		$_POST=json_decode($_POST['data'],true);
+		$tmpSum = $_POST['askScore'] +  $_POST['chooseScore'] +  $_POST['fillScore'];
+		$tmpSumNum = $_POST['chooseNum'] +  $_POST['fillNum'] +  $_POST['askNum'];
+		if($_POST['askScore']!=0 || $_POST['askNum']!=0){
+			$askAverage = $_POST['askScore'] /  $_POST['askNum'];
+		}else {
+			$askAverage = 0;
+		}
+		if($_POST['chooseScore']!=0 || $_POST['chooseNum']!=0){
+			$chooseAverage = $_POST['chooseScore'] /  $_POST['chooseNum'];
+		}else {
+			$chooseAverage = 0;
+		}
+		if($_POST['fillScore']!=0 || $_POST['fillNum']!=0){
+			$fillAverage = $_POST['fillScore'] /  $_POST['fillNum'];
+		}else {
+			$fillAverage = 0;
+		}
+
+
+		if(is_nan($askAverage)){
+			$askAverage = 0;
+		}else{
+			$askAverage = number_format($askAverage, 2, '.', '');
+			$askAverage = '問答題有'. $_POST['askNum'].'題 每題'.$askAverage.' 合計'.$_POST['askScore'].'分';
+		}
+		if(is_nan($chooseAverage)){
+			$chooseAverage = 0;
+		}else{
+			$chooseAverage = number_format($chooseAverage, 2, '.', '');
+
+			$chooseAverage = '選擇題有'. $_POST['chooseNum'].'題 每題'.$chooseAverage.' 合計'.$_POST['chooseScore'].'分';
+		}
+		if(is_nan($fillAverage)){
+			$fillAverage = 0;
+		}else{
+			$fillAverage = number_format($fillAverage, 2, '.', '');
+
+			$fillAverage = '填充題有'. $_POST['fillNum'].'題 每題'.$fillAverage.' 合計'.$_POST['fillScore'].'分';
+		}
+		$ack = array(
+				'status' => 'success',
+				'chooseAverage' => $chooseAverage,
+				'askAverage' => $askAverage,
+				'fillAverage' => $fillAverage
+
+			);
+
+		if($tmpSum != 100){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '分數總合不為100'
+			);
+		}
+		if($tmpSumNum == 0 ){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '題數不得為0'
+			);
+		}
+		// var_dump($_POST['askScore'] == 0);
+		if(($_POST['askScore'] != 0 )&& ($_POST['askNum']== 0)){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '問答題題目不得為0'
+			);
+		}else if(($_POST['chooseScore'] != 0) &&  ($_POST['chooseNum'] == 0)){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '選擇題題目不得為0'
+			);
+		}else if(($_POST['fillScore'] != 0 )&& ( $_POST['fillNum'] == 0)){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '填充題題目不得為0'
+			);
+		}
+
+		if(($_POST['askScore'] == 0 )&& ($_POST['askNum'] != 0)){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '問答題配分不得為0'
+			);
+		}else if(($_POST['chooseScore'] )== 0 &&  ($_POST['chooseNum'] != 0)){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '選擇題配分不得為0'
+			);
+		}else if(($_POST['fillScore'] == 0 )&&  ($_POST['fillNum'] != 0)){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '填充題配分不得為0'
+			);
+		}
+
+		if(empty($_POST['questionContent'])){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '尚未選擇題型內容'
+			);
+		}
+		if(empty($_POST['selectUnit'] )){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '尚未選擇單元'
+			);
+		}
+
+		
+		if(empty($_POST['fileName'] )){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '檔案名稱不得為空'
+			);
+		}else if(empty($_POST['testName'] )){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '考試名稱不得為空'
+			);
+		}else if(empty($_POST['DepartmentName'] )){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '科系名稱不得為空'
+			);
+		}else if(empty($_POST['testSize'] )){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '試卷尺寸不得為空'
+			);
+		}else if(empty($_POST['schoolName'] )){
+			$ack = array(
+				'status' => 'failed',
+				'content' => '學校名稱不得為空'
+			);
+		}
+
+
+
+		return $ack;
+	}
+}
+
+Class Question{
+	var $result;
+	var $conn;
+	function __construct($db){
+		$this->conn = $db;
+	}
+
+	function getQuestion($unitID, $source){
+		
+		if($source == 'both'){
+			$chooseG = $this ->getQandA($unitID,'general','choose');
+			$chooseP= $this ->getQandA($unitID,'previous','choose');
+			$fillG = $this ->getQandA($unitID,'general','fill');
+			$fillP= $this ->getQandA($unitID,'previous','fill');
+			$askG = $this ->getQandA($unitID,'general','ask');
+			$askP= $this ->getQandA($unitID,'previous','ask');
+
+			$choose = array_merge($chooseG, $chooseP);
+			$fill = array_merge($fillG, $fillP);
+			$ask = array_merge($askG, $askP);
+		}else{
+			$choose = $this ->getQandA($unitID,$source,'choose');
+			$fill = $this ->getQandA($unitID,$source,'fill');
+			$ask = $this ->getQandA($unitID,$source,'ask');
+		}
+		// var_dump($select);
+
+
+		$ack = array(
+			'choose' => $choose,
+			'fill' => $fill,
+			'ask' => $ask
+		);
+		return $ack;
+
+	}
+
+	function getQandA($unitID, $source,$type){
+		$sql ='SELECT `question`.`id`,`question`.`question`,`question`.`degree`,`question`.`source`,`question`.`isMultiple`,`question`.`unitID`,`question`.`type` 
+				FROM `etest`.`question`
+				WHERE `question`.`type` = :type AND `question`.`unitID` = :unitID AND `question`.`source` = :source';
+		$sth = $this->conn->prepare($sql);
+	   	// $sth->bindParam(':type',$type);
+	   	$sth->bindParam(':type',$type);
+	   	$sth->bindParam(':unitID',$unitID);
+	   	$sth->bindParam(':source',$source);
+		$sth->execute();
+		$row = $sth->fetchAll();
+		$ack = array();
+		foreach ($row as $value){
+			// var_dump($value['id']);
+			$sql ='SELECT `selectOption`.`id`,
+					    `selectOption`.`selectID`,
+					    `selectOption`.`content`,
+					    `selectOption`.`isAnswer`
+					FROM `etest`.`selectOption`
+					WHERE `selectOption`.`selectID` = :selectID;';
+			$sth = $this->conn->prepare($sql);
+		   	$sth->bindParam(':selectID',$value['id']);
+			$sth->execute();
+			$ansRow = $sth->fetchAll();
+			// var_dump($ansRow);
+			$tmp= array(
+				'question' => $value,
+				'answer' => $ansRow
+			);
+			array_push($ack, $tmp);
+
+			// var_dump($ack);
+
+		}
+		return $ack;
+
+	}
+
+	
+
 }
 ?>

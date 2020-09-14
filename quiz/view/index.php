@@ -2,8 +2,8 @@
   include('partial/header.php');
 ?>
 <div class="container">
-  <div class="card h-100"  style="height:65vh">
-    <div class="card-head" style="text-align: center">
+  <div class="card h-100 shadow"  style="height:65vh">
+    <div class="card-header" style="text-align: center">
       <h2>請選擇操作項目</h2>
     </div>
     <div class="card-body h-100">
