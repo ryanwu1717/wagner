@@ -6,6 +6,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 // use Slim\Factory\AppFactory;
 use Slim\Views\PhpRenderer;
+
 $configuration = [
     'settings' => [
         'displayErrorDetails' => true,
@@ -332,6 +333,33 @@ $app->group('/question', function () use ($app) {
 		$response = $response->withJson($result);
 		// echo $response;
 	    return $response;
+	});
+});
+$app->group('/file', function () use ($app) {
+	$app->get('/excel', function (Request $request, Response $response, array $args) {
+		// require_once('../../Library/PHPExcel-1.8/Classes/PHPExcel/IOFactory.php');
+
+	    $file = new File($this->db);
+	    $result = $file->excel_read();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->get('/example', function (Request $request, Response $response, array $args) {
+		$file = './../file/example.xlsx';
+
+		if (file_exists($file)) {
+		    header('Content-Description: File Transfer');
+		    header('Content-Type: application/octet-stream');
+		    header('Content-Disposition: attachment;filename="'.basename($file).'"');
+		    header('Expires: 0');
+		    header('Cache-Control: must-revalidate');
+		    header('Pragma: public');
+		    header('Content-Length: ' . filesize($file));
+		    readfile($file);
+		    exit;
+		}
 	});
 });
 $app->run();

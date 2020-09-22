@@ -1,4 +1,8 @@
 <?php
+
+include(__DIR__.'/../PHPExcel-1.8/Classes/PHPExcel.php');
+include(__DIR__.'/../PHPExcel-1.8/Classes/PHPExcel/Writer/Excel2007.php');
+require_once(__DIR__.'/../PHPExcel-1.8/Classes/PHPExcel/IOFactory.php');
 use Slim\Http\UploadedFile;
 	// Class User{
 	// 	var $result;
@@ -894,5 +898,70 @@ Class Question{
 
 	
 
+}
+Class File{
+	var $result;
+	var $conn;
+	function __construct($db){
+		$this->conn = $db;
+	}
+	
+		
+	function excel_read(){
+
+	  	$reader = PHPExcel_IOFactory::createReader('Excel2007'); // 讀取2007 excel 檔案
+		$PHPExcel = $reader->load("./../exceldatatxt.xlsx"); // 檔案名稱 需已經上傳到主機上
+
+		$sheet = $PHPExcel->getSheet(1); // 讀取第一個工作表(編號從 0 開始)
+		$highestRow = $sheet->getHighestRow(); // 取得總列數
+		$highestcolumn = $sheet->getHighestColumn();
+		$highestcolumn = PHPExcel_Cell::columnIndexFromString($highestcolumn);
+
+		// echo '總共 '.$highestRow.' 列';
+		// echo '總共 '.$highestcolumn.' 欄';
+
+		$column_name[0]="picture";
+		$column_name[1]="name";
+		$column_name[2]="author";
+		$column_name[3]="publishing_house";
+		$column_name[4]="list_price";
+		$column_name[5]="library_discount";
+		$column_name[6]="new_discount";
+		$column_name[7]="ISBN";
+		$column_name[8]="library_area";
+		$column_name[9]="update_time";
+		$column_name[10]="inventories_id";
+		$column_name[11]="inventories_status";
+
+		$result = array();
+		$excel_row_array=array();
+
+		// $val = $sheet->getCellByColumnAndRow(0, 1)->getValue();//此為第一格
+		//var_dump($val);
+		//一次讀取一列
+		for ($row = 2; $row <= $highestRow; $row++) {
+		  for ($column = 0; $column < $highestcolumn; $column++) {//看你有幾個欄位 此範例為 13 個位
+		     
+		      // $val = $sheet->getCellByColumnAndRow($column, $row)->getValue();
+		      $excel_row_array[$column_name[$column]]=$sheet->getCellByColumnAndRow($column, $row)->getValue();
+		      // echo $val.' ';
+		  }
+		  // echo "<br />";
+		  array_push($result,$excel_row_array);
+		}
+
+		// $result = array();
+		// $array[1]="a";
+		// $array[2]="b";
+		// array_push($result,$array);
+
+		return $result;
+		// var_dump($result);
+		// echo "<br />";
+
+		// $json_encode=json_encode($result);
+		// print_r($json_encode);
+	 }
+		
 }
 ?>
