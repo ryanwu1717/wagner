@@ -905,35 +905,64 @@ Class File{
 	function __construct($db){
 		$this->conn = $db;
 	}
-	
-		
-	function excel_read(){
+	private function moveUploadedFile($directory, UploadedFile $uploadedFile){
+	    $extension = pathinfo($uploadedFile->getClientFilename(), PATHINFO_EXTENSION);
+	    $basename = bin2hex(random_bytes(8)); // see http://php.net/manual/en/function.random-bytes.php
+	    $filename = sprintf('%s.%0.8s', $basename, $extension);
+	    $uploadedFile->moveTo($directory . DIRECTORY_SEPARATOR . $filename);
+	    return $filename;
+	}
+	function uploadQuestion($directory,$uploadedFiles){
+		$uploadedFile = $uploadedFiles['inputFile'];
+		if ($uploadedFile->getError() === UPLOAD_ERR_OK) {
+	        $filename = $this->moveUploadedFile($directory, $uploadedFile);
+	  //       $UID = $_SESSION['id'];
+			$sql = 'INSERT INTO `file` (`UID`, `fileName`, `fileNameClient`) VALUES ( :UID,:fileName,:fileNameClient)';
+			$sth = $this->conn->prepare($sql);
+			$sth->bindParam(':fileName',$filename,PDO::PARAM_STR);
+			$sth->bindParam(':fileNameClient',$uploadedFile->getClientFilename(),PDO::PARAM_STR);
+			$sth->bindParam(':UID',$_SESSION['id'],PDO::PARAM_STR);
+			$sth->execute();
 
+			$returnQuestion = $this->excel_read($directory, $filename);
+		    $result = array(
+		    	'status' => 'success',
+		    	'question' => $returnQuestion,
+	    		'extension' => exif_imagetype($uploadedFile->getClientFilename())
+		    );
+	    }else{
+		    $result = array(
+		    	'status' => 'failed',
+		    );
+	    }
+
+		;
+	    return $result;
+	}
+
+	function excel_read($directory, $filename){
 	  	$reader = PHPExcel_IOFactory::createReader('Excel2007'); // 讀取2007 excel 檔案
-		$PHPExcel = $reader->load("./../exceldatatxt.xlsx"); // 檔案名稱 需已經上傳到主機上
-
-		$sheet = $PHPExcel->getSheet(1); // 讀取第一個工作表(編號從 0 開始)
+		$PHPExcel = $reader->load($directory.'/'.$filename); // 檔案名稱 需已經上傳到主機上
+		$sheet = $PHPExcel->getSheet(0); // 讀取第一個工作表(編號從 0 開始)
 		$highestRow = $sheet->getHighestRow(); // 取得總列數
 		$highestcolumn = $sheet->getHighestColumn();
 		$highestcolumn = PHPExcel_Cell::columnIndexFromString($highestcolumn);
-
+		$highestChoose = $highestcolumn-2;
 		// echo '總共 '.$highestRow.' 列';
 		// echo '總共 '.$highestcolumn.' 欄';
 
-		$column_name[0]="picture";
-		$column_name[1]="name";
-		$column_name[2]="author";
-		$column_name[3]="publishing_house";
-		$column_name[4]="list_price";
-		$column_name[5]="library_discount";
-		$column_name[6]="new_discount";
-		$column_name[7]="ISBN";
-		$column_name[8]="library_area";
-		$column_name[9]="update_time";
-		$column_name[10]="inventories_id";
-		$column_name[11]="inventories_status";
+		$column_name[0]="question";
+		$column_name[1]="answer";
+		$count = 1;
+		for ($row = 2; $row <= $highestcolumn; $row++) {
+			// var_dump($row);
+			$column_name[$row]=$count;
+			$count+=1;
+		}
 
-		$result = array();
+		
+
+		$choose = array();
 		$excel_row_array=array();
 
 		// $val = $sheet->getCellByColumnAndRow(0, 1)->getValue();//此為第一格
@@ -947,14 +976,48 @@ Class File{
 		      // echo $val.' ';
 		  }
 		  // echo "<br />";
-		  array_push($result,$excel_row_array);
+		  array_push($choose,$excel_row_array);
+		}
+
+		$sheet = $PHPExcel->getSheet(1); // 讀取第一個工作表(編號從 0 開始)
+		$highestRow = $sheet->getHighestRow(); // 取得總列數
+		$highestcolumn = $sheet->getHighestColumn();
+		$highestcolumn = PHPExcel_Cell::columnIndexFromString($highestcolumn);
+		$column_name[0]="question";
+		$column_name[1]="answer";
+		$fill = array();
+		$excel_row_array=array();
+		for ($row = 2; $row <= $highestRow; $row++) {
+		  for ($column = 0; $column < $highestcolumn; $column++) {
+		      $excel_row_array[$column_name[$column]]=$sheet->getCellByColumnAndRow($column, $row)->getValue();
+		  }
+		  array_push($fill,$excel_row_array);
+		}
+
+		$sheet = $PHPExcel->getSheet(2); // 讀取第一個工作表(編號從 0 開始)
+		$highestRow = $sheet->getHighestRow(); // 取得總列數
+		$highestcolumn = $sheet->getHighestColumn();
+		$highestcolumn = PHPExcel_Cell::columnIndexFromString($highestcolumn);
+		$column_name[0]="question";
+		$ask = array();
+		$excel_row_array=array();
+		for ($row = 2; $row <= $highestRow; $row++) {
+		  for ($column = 0; $column < $highestcolumn; $column++) {
+		      $excel_row_array[$column_name[$column]]=$sheet->getCellByColumnAndRow($column, $row)->getValue();
+		  }
+		  array_push($ask,$excel_row_array);
 		}
 
 		// $result = array();
 		// $array[1]="a";
 		// $array[2]="b";
 		// array_push($result,$array);
-
+		$result=array(
+			'choose' => $choose,
+			'fill' => $fill,
+			'ask' => $ask,
+			'highestChoose' => $highestChoose
+		);
 		return $result;
 		// var_dump($result);
 		// echo "<br />";
@@ -963,5 +1026,19 @@ Class File{
 		// print_r($json_encode);
 	 }
 		
+}
+Class Permission{
+	var $result;
+	var $conn;
+	function __construct($db){
+		$this->conn = $db;
+	}
+	function getPermission(){
+		$sql ='SELECT * FROM `permission`;';
+		$sth = $this->conn->prepare($sql);
+		$sth->execute();
+		$row = $sth->fetchAll();
+		return $row;
+	}
 }
 ?>

@@ -743,7 +743,7 @@ function chooseChapter() {
 			$('#exampleModal .modal-body').append(`
     		<div class="card" id="cardChapter">
     			<div class="card-header">
-    				章
+    				章節
     			</div>
 				  <div class="card-body overflow-auto" style=" max-height: 100px;" >
 				  	<button type="button" class="btn btn-primary btn-sm" id="chooseAllChapter" onclick="chooseAllChapterOnclick();">全選</button>
@@ -754,7 +754,7 @@ function chooseChapter() {
 				</div>
 				<div class="card" id="cardUnit">
    				<div class="card-header">
-    				節
+    				單元
     			</div>
 					<div class="card-body overflow-auto" style=" max-height: 150px;" id="cardBodyUnitAll">
 					</div>

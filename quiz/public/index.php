@@ -127,6 +127,10 @@ $app->group('', function () use ($app) {
 			$viewParam = $request->getAttribute('viewParam');
 			return $this->view->render($response, '/userGuide.php',$viewParam);
 		});
+		$app->get('/limit', function (Request $request, Response $response, array $args) {
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/limit.php',$viewParam);
+		});
 	})->add('ViewMiddleware');
 	$app->get('/login', function (Request $request, Response $response, array $args) {
 		session_destroy();
@@ -267,6 +271,27 @@ $app->group('/user', function () use ($app) {
 		});
 	});
 });
+$app->group('/file', function () use ($app) {
+	$app->post('/question', function (Request $request, Response $response, array $args) {
+		$file = new File($this->db);
+		$result = $file->uploadQuestion($this->upload_directory,$request->getUploadedFiles());
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+	    return $response;
+	});
+});
+
+$app->group('/permission', function () use ($app) {
+	$app->get('', function (Request $request, Response $response, array $args) {
+	    $permission = new Permission($this->db);
+	    $result = $permission->getPermission($args['type']);
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+});
+
 $app->group('/test', function () use ($app) {
 	$app->post('', function (Request $request, Response $response, array $args) {
 	    $test = new Test($this->db);
