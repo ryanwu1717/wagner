@@ -10,6 +10,7 @@
   <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
   <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet"><!-- Custom styles for this template-->
   <link href="css/sb-admin-2.min.css" rel="stylesheet">
+  <link href="css/autoComplete.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-primary">
   <div class="container">
@@ -35,37 +36,38 @@
                 <div class="form-group row">
                   <label class="col-form-label col-md-2">中文姓名</label>
                   <div class="col-md-8">
-                    <input class="form-control form-control-user" required="" name="inputChineseName" placeholder="ex.王小美" type="text"></input>
+                    <input class="form-control form-control-user" required="" name="inputChineseName" placeholder="ex.王小美" type="text" autocomplete="off"></input>
                   </div>
                 </div>
                 <div class="form-group row">
                   <label class="col-form-label col-md-2">帳號</label>
                   <div class="col-md-8">
-                    <input class="form-control form-control-user" required="" name="inputAccount" placeholder="ex.wangshaomay@gmail.com" type="email">
+                    <input class="form-control form-control-user" required="" name="inputAccount" placeholder="ex.wangshaomay@gmail.com" type="email" autocomplete="off">
                   </div>
                 </div>
                 <div class="form-group row" id="rowPassword">
                   <label class="col-form-label col-md-2">密碼</label>
                   <div class="col-md-8">
-                    <input class="form-control form-control-user" required="" name="inputPassword" placeholder="ex.20201314wang" type="password">
+                    <input class="form-control form-control-user" required="" name="inputPassword" placeholder="ex.20201314wang" type="password" autocomplete="off">
                   </div>
                 </div>
                 <div class="form-group row">
                   <label class="col-form-label col-md-2">手機</label>
                   <div class="col-md-8">
-                    <input class="form-control form-control-user" required="" name="inputPhone" placeholder="ex.0900000000" type="text">
+                    <input class="form-control form-control-user" required="" name="inputPhone" placeholder="ex.0900000000" type="text" autocomplete="off">
                   </div>
                 </div>
                 <div class="form-group row">
                   <label class="col-form-label col-md-2">服務學校</label>
-                  <div class="col-md-8">
-                    <input class="form-control form-control-user" required="" name="inputSchool" placeholder="ex.旗山農工" type="text">
+                    <div class="autocomplete col-md-8">
+                      <!-- <input id="myInput" type="text" name="myCountry" placeholder="Country"> -->
+                    <input class="form-control form-control-user" required="" name="inputSchool" placeholder="ex.旗山農工" type="text" id="myInput" autocomplete="off">
                   </div>
                 </div>
                 <div class="form-group row">
                   <label class="col-form-label col-md-2">科系</label>
                   <div class="col-md-8">
-                    <input class="form-control form-control-user" required="" name="inputDepartment" placeholder="ex.食品加工科" type="text">
+                    <input class="form-control form-control-user" required="" name="inputDepartment" placeholder="ex.食品加工科" type="text" autocomplete="off">
                   </div>
                 </div>
                 <div class="form-group row" id = "rowVerificationPic">
@@ -116,16 +118,13 @@
       </div>
     </div>
   </div><!-- Bootstrap core JavaScript-->
-  <script src="vendor/jquery/jquery.min.js">
-  </script> 
-  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js">
-  </script> <!-- Core plugin JavaScript-->
+  <script src="vendor/jquery/jquery.min.js"></script> 
+  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script> <!-- Core plugin JavaScript-->
+  <script src="vendor/jquery-easing/jquery.easing.min.js"></script> <!-- Custom scripts for all pages-->
    
-  <script src="vendor/jquery-easing/jquery.easing.min.js">
-  </script> <!-- Custom scripts for all pages-->
-   
-  <script src="js/sb-admin-2.min.js">
-  </script>
+  <script src="js/sb-admin-2.min.js"></script>
+  <script src="js/autoComplete.js"></script>
+
 
   
 </body>
@@ -133,6 +132,23 @@
 <script type='text/javascript'>
 var url = new URL(window.location.href);
 var update = url.searchParams.get("id");
+var countries = [];
+
+$(function() {
+  $.ajax({
+    url:'/user/school',
+    type:'GET',
+    data:{},
+    dataType:'json',
+    success:function(response){
+      $.each(response,function(key,value){
+        countries.push(value.name);
+      });
+      autocomplete(document.getElementById("myInput"), countries);
+    }
+
+  });
+});
 console.log(update);
 function changeCode() {
     $("#imgVerification").attr("src","/verification");

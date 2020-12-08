@@ -95,6 +95,10 @@ $app->group('', function () use ($app) {
 			$viewParam = $request->getAttribute('viewParam');
 			return $this->view->render($response, '/index.php',$viewParam);
 		});
+		$app->get('/testSwagger', function (Request $request, Response $response, array $args) {
+			$viewParam = $request->getAttribute('viewParam');
+			return $this->view->render($response, '/index.php',$viewParam);
+		});
 		$app->get('/function', function (Request $request, Response $response, array $args) {
 			$viewParam = $request->getAttribute('viewParam');
 			return $this->view->render($response, '/function.php',$viewParam);
@@ -148,6 +152,15 @@ $app->group('', function () use ($app) {
 });
 
 $app->group('/user', function () use ($app) {
+	$app->get('/school', function (Request $request, Response $response, array $args) {
+	    $user = new User($this->db);
+	    $result = $user->getAllSchool();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+
 	$app->get('/id/{type}', function (Request $request, Response $response, array $args) {
 	    $user = new User($this->db);
 	    $result = $user->getID($args['type']);
@@ -293,6 +306,14 @@ $app->group('/permission', function () use ($app) {
 });
 
 $app->group('/test', function () use ($app) {
+	$app->get('', function (Request $request, Response $response, array $args) {
+	    $test = new Test($this->db);
+	    $result = $test->getTest();
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
 	$app->post('', function (Request $request, Response $response, array $args) {
 	    $test = new Test($this->db);
 	    $result = $test->addTest();
@@ -351,6 +372,38 @@ $app->group('/test', function () use ($app) {
 	});
 });
 $app->group('/question', function () use ($app) {
+	$app->post('/check', function (Request $request, Response $response, array $args) {
+	    $question = new Question($this->db);
+	    $result = $question->checkUploadQuestion($request->getParsedBody());
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->post('/ask', function (Request $request, Response $response, array $args) {
+	    $question = new Question($this->db);
+	    $result = $question->addAsk($request->getParsedBody());
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->post('/fill', function (Request $request, Response $response, array $args) {
+	    $question = new Question($this->db);
+	    $result = $question->addFill($request->getParsedBody());
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
+	$app->post('/choose', function (Request $request, Response $response, array $args) {
+	    $question = new Question($this->db);
+	    $result = $question->addQuestion($request->getParsedBody());
+	    $response = $response->withHeader('Content-type', 'application/json' );
+		$response = $response->withJson($result);
+		// echo $response;
+	    return $response;
+	});
 	$app->get('/{unitID}/{source}', function (Request $request, Response $response, array $args) {
 	    $question = new Question($this->db);
 	    $result = $question->getQuestion($args['unitID'],$args['source']);

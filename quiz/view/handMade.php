@@ -1,6 +1,8 @@
 <?php
   include('partial/header.php');
 ?>
+<link href="css/autoComplete.css" rel="stylesheet">
+
 <div class="container">
 	<div class="card o-hidden shadow-lg ">
 		<div class="card-body">
@@ -26,7 +28,7 @@
 									<div class="form-group row">
 										<label class="col-form-label col-md-4">學校名稱</label>
 										<div class="col-md-8">
-											<input class="form-control form-control-user" data-type= "schoolName" name="firstPageInput" placeholder="ex.國立高雄師範大學" required type="text">
+											<input class="form-control form-control-user" data-type= "schoolName" name="firstPageInput" placeholder="ex.國立高雄師範大學" required type="text" id="myInput" autocomplete="off">
 										</div>
 									</div>
 									<div class="form-group row">
@@ -246,6 +248,7 @@
 							<div class="col-md-12">
 								<div class="d-flex justify-content-around">
 									<!-- <button class="btn btn-primary btn-lg btn-block m-3" name="btnUpPage" onclick="location.href='function'" type="submit">未完成儲存</button>  -->
+									<button class="btn btn-primary btn-lg btn-block m-3" id="btnCheckQuestion"  type="" data-toggle="modal" data-target="#exampleModal" data-type="saveQuestion">未完成儲存</button>
 									<button class="btn btn-primary btn-lg btn-block m-3" id="btnCheckQuestion"  type="" data-toggle="modal" data-target="#exampleModal" data-type="checkQuestion">已完成儲存</button>
 								</div>
 							</div>
@@ -255,6 +258,8 @@
 			</div>
 		</div>
 	</div>
+   <script src="js/autoComplete.js"></script>
+
 </div>
 	<!-- Modal -->
 <div class="modal fade " id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -307,6 +312,12 @@ var chooseBookID;
 var chooseUnitID = new Array();
 var data = new Object();
 var chooseChapterID = new Array();
+var countries = [];
+
+var url = new URL(window.location.href);
+var modifyID = url.searchParams.get("id");
+ 
+console.log(modifyID);
 
 // data['unit'] = [1,2,3];
 // chooseUnitID = [1,2,3];
@@ -342,6 +353,19 @@ $(function() {
 
 	  
 	});
+	 $.ajax({
+	    url:'/user/school',
+	    type:'GET',
+	    data:{},
+	    dataType:'json',
+	    success:function(response){
+	      $.each(response,function(key,value){
+	        countries.push(value.name);
+	      });
+	      autocomplete(document.getElementById("myInput"), countries);
+	    }
+
+	  });
 
 });
 $('#exampleModal').on('show.bs.modal', function(e) {
@@ -385,7 +409,7 @@ function addTest() {
 		},
 		dataType: 'json',
 		success: function(response) {
-			window.location.href=`/makeTest?id=${response.id}`;
+			// window.location.href=`/makeTest?id=${response.id}`;
 		}
 	});
 }

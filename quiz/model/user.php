@@ -111,7 +111,8 @@ Class User{
 		}
 
 		// var_dump($_POST['account'],$_POST['password']);
-		$sql ='SELECT * FROM `user` WHERE account = :account and password = :password and `delete` = false ;';
+		$sql ='SELECT * FROM `user`
+			 WHERE account = :account and password = :password and `delete` = false ;';
 		$sth = $this->conn->prepare($sql);
 	   	$sth->bindParam(':account',$_POST['account']);
 	   	$sth->bindParam(':password',$_POST['password']);
@@ -171,6 +172,16 @@ Class User{
 			return $_SESSION['id'];
 		}
 	}
+
+	function getAllSchool(){
+		$sql ='SELECT * FROM `school`;';
+		$sth = $this->conn->prepare($sql);
+	   	// $sth->bindParam(':id',$_SESSION['id']);
+		$sth->execute();
+		$row = $sth->fetchAll();
+		return $row;
+	}
+
 	function getName(){
 		$sql ='SELECT name FROM `user` WHERE id = :id ;';
 		$sth = $this->conn->prepare($sql);
@@ -325,6 +336,14 @@ Class User{
 	}
 	function register(){
 		try{
+
+			$sql ='SELECT * FROM `school` WHERE name = :name ';
+			$sth = $this->conn->prepare($sql);
+		   	$sth->bindParam(':name',$input,PDO::PARAM_STR);
+			$sth->execute();
+			$row = $sth->fetchAll();	
+
+
 			$_POST=json_decode($_POST['data'],true);
 			$sql ='INSERT INTO `user` ( `name`, `account`, `password`, `phone`, `school`, `department`, `authority`) VALUES (:name, :account, :password, :phone, :school, :department, \'2\');';
 			$statement = $this->conn->prepare($sql);
@@ -405,7 +424,7 @@ Class User{
 			   	$sth->bindParam(':account',$input);
 				$sth->execute();
 				$row = $sth->fetchAll();
-				if(count($row)>0){
+				if(count($row)<1){
 					return $field."已被使用";
 				}
 				// echo $name_len;
@@ -427,6 +446,14 @@ Class User{
 				return "success";
 				break;
 			case '學校':
+				$sql ='SELECT * FROM `school` WHERE name = :name ';
+				$sth = $this->conn->prepare($sql);
+			   	$sth->bindParam(':name',$input,PDO::PARAM_STR);
+				$sth->execute();
+				$row = $sth->fetchAll();
+				if(count($row)<1){
+					return "請輸入存在".$field;
+				}
    				if($inputLen > 20){
 					return $field."不符合格式";
 				}
@@ -468,6 +495,7 @@ Class User{
 		$checkPhone = $this -> check('電話',$_POST['inputPhone']);
 		$checkSchool = $this -> check('學校',$_POST['inputSchool']);
 		$checkDepartment = $this -> check('科系',$_POST['inputDepartment']);
+
 		$ack = array(
 					'chineseName' => $checkChineseName,
 					'account' => $checkAccount,
@@ -503,11 +531,25 @@ Class Test{
    		return 'success';
    	}
 
+   	function getTest(){
+   		$sql ='SELECT * FROM `test` WHERE UID = :UID ;';
+		$sth = $this->conn->prepare($sql);
+	   	$sth->bindParam(':UID',$_SESSION['id']);
+		$sth->execute();
+		$row = $sth->fetchAll();
+		return $row;
+
+   	}
+
    	function addTest(){
 		$_POST=json_decode($_POST['data'],true);
+		$arr=implode(",",$_POST['unit']);
+		$finish = 0;
+		// var_dump($arr);
+		// return; 
 		$tmp = $_POST['questionType'];
-		$sql ='INSERT INTO `etest`.`test`(`school`,`department`,`name`,`size`,`file`,`UID`)
-				VALUES(:school,:department,:name,:size,:file,:UID);';
+		$sql ='INSERT INTO `etest`.`test`(`school`,`department`,`name`,`size`,`file`,`UID`,`finish`,`unit`,`chooseNum`,`fillNum`,`askNum`)
+				VALUES(:school,:department,:name,:size,:file,:UID,:finish,:unit,:chooseNum,:fillNum,:askNum);';
 		$sth = $this->conn->prepare($sql);
 	   	$sth->bindParam(':school',$tmp['schoolName']);
 	   	$sth->bindParam(':department',$tmp['DepartmentName']);
@@ -515,6 +557,11 @@ Class Test{
 	   	$sth->bindParam(':size',$tmp['testSize']);
 	   	$sth->bindParam(':file',$tmp['fileName']);
 	   	$sth->bindParam(':UID',$_SESSION['id']);
+	   	$sth->bindParam(':finish',$finish);
+	   	$sth->bindParam(':unit',$arr);
+	   	$sth->bindParam(':chooseNum',$tmp['chooseNum']);
+	   	$sth->bindParam(':fillNum',$tmp['fillNum']);
+	   	$sth->bindParam(':askNum',$tmp['askNum']);
 		$sth->execute();
 		$tmpID = $this->conn->lastInsertId();
 		foreach ($_POST['question'] as $value) {
@@ -828,6 +875,334 @@ Class Question{
 		$this->conn = $db;
 	}
 
+	function checkType($body){
+		$ack = array(
+			'status' => 'success'
+		);
+		$count = 0;
+		if(!empty($body['chooseType'][0])){
+			// var_dump($body['choose']);
+
+			foreach($body['chooseType'] as $value){
+				// var_dump($value);
+				if(!($value == '一般試題' || $value == '歷屆試題' )){
+					$ack = array(
+						'status' => 'failed',
+						'type' => 'Choose',
+						'stype' => 'choose',
+						'message' => '試題類型不符合格式',
+						'num' => $count
+					);
+					return $ack;
+
+				}
+				$count = $count + 1;
+			}
+		}
+
+			
+		$count = 0;
+		if(!empty($body['fillType'][0])){
+			foreach($body['fillType'] as $value){
+				// var_dump($value);
+				if(!($value == '一般試題' || $value == '歷屆試題')){
+					$ack = array(
+						'status' => 'failed',
+						'type' => 'Fill',
+						'stype' => 'fill',
+						'message' => '試題類型不符合格式',
+						'num' => $count
+					);
+					return $ack;
+
+				}
+				$count = $count + 1;
+			}
+		}
+		
+		$count = 0;
+		if(!empty($body['askType'][0])){
+			foreach($body['askType'] as $value){
+				// var_dump($value);
+				if(!($value == '一般試題' || $value == '歷屆試題')){
+					$ack = array(
+						'status' => 'failed',
+						'type' => 'Ask',
+						'stype' => 'ask',
+						'message' => '試題類型不符合格式',
+						'num' => $count
+					);
+					return $ack;
+
+				}
+				$count = $count + 1;
+			}
+		}
+			
+
+
+		return $ack;
+	}
+
+	function checkDegree($body){
+		$ack = array(
+			'status' => 'success'
+		);
+		$count = 0;
+		if(!empty($body['choose'][0])){
+			// var_dump($body['choose']);
+
+			foreach($body['choose'] as $value){
+				// var_dump($value);
+				if(!($value == '難' || $value == '中' || $value == '易')){
+					$ack = array(
+						'status' => 'failed',
+						'type' => 'Choose',
+						'stype' => 'choose',
+						'message' => '難易度不符合格式',
+						'num' => $count
+					);
+					return $ack;
+
+				}
+				$count = $count + 1;
+			}
+		}
+
+			
+		$count = 0;
+		if(!empty($body['fill'][0])){
+			foreach($body['fill'] as $value){
+				// var_dump($value);
+				if(!($value == '難' || $value == '中' || $value == '易')){
+					$ack = array(
+						'status' => 'failed',
+						'type' => 'Fill',
+						'stype' => 'fill',
+						'message' => '難易度不符合格式',
+						'num' => $count
+					);
+					return $ack;
+
+				}
+				$count = $count + 1;
+			}
+		}
+		
+		$count = 0;
+		if(!empty($body['ask'][0])){
+			foreach($body['ask'] as $value){
+				// var_dump($value);
+				if(!($value == '難' || $value == '中' || $value == '易')){
+					$ack = array(
+						'status' => 'failed',
+						'type' => 'Ask',
+						'stype' => 'ask',
+						'message' => '難易度不符合格式',
+						'num' => $count
+					);
+					return $ack;
+
+				}
+				$count = $count + 1;
+			}
+		}
+			
+
+
+		return $ack;
+	}
+
+	function checkUploadQuestion($body){
+		$body=json_decode($body['data'],true);
+		$ack = array(
+			'degree' => $this->checkDegree($body),
+			'type' => $this->checkType($body)
+		);
+
+		// $this->conn
+		$count = 0;
+		
+
+		return $ack;
+	}
+
+	
+
+	function addAsk($question,$unit){
+		// $body=json_decode($body['data'],true);
+		if(count($question[0]) == 0){
+			$ack = array(
+				'status' => 'success'
+			);
+			return $ack;
+		}
+			
+		foreach ($question as $key => $value) {
+			if($value['type'] == '一般試題'){
+				$source = 'general';
+			}else if ($value['type'] == '歷屆試題'){
+				$source = 'previous';
+
+			}
+			$sql ="INSERT INTO `question` ( `type`, `question`, `degree`, `source`, `isMultiple`, `unitID`) VALUES ( 'ask', :question,:degree, :source, false, :unit)";
+			$sth = $this->conn->prepare($sql);
+		   	// $sth->bindParam(':type',$type);
+		   	// $sth->bindParam(':type','choose');
+		   	$sth->bindParam(':question',$value['question'],PDO::PARAM_STR);
+		   	$sth->bindParam(':degree',$value['degree'],PDO::PARAM_STR);
+		   	$sth->bindParam(':source',$source,PDO::PARAM_STR);
+		   	$sth->bindParam(':unit',$unit);
+			$sth->execute();
+			
+
+		}
+		$ack = array(
+			'status' => 'success'
+		);
+		return $ack;
+
+	}
+
+	
+
+	function addFill($question,$unit){
+		// $body=json_decode($body['data'],true);
+		if(count($question[0]) == 0){
+			$ack = array(
+				'status' => 'success'
+			);
+			return $ack;
+		}
+
+		foreach ($question as $key => $value) {
+			if($value['type'] == '一般試題'){
+				$source = 'general';
+			}else if ($value['type'] == '歷屆試題'){
+				$source = 'previous';
+
+			}
+			$sql ="INSERT INTO `question` ( `type`, `question`, `degree`, `source`, `isMultiple`, `unitID`) VALUES ( 'fill', :question,:degree, :source, false, :unit)";
+			$sth = $this->conn->prepare($sql);
+		   	// $sth->bindParam(':type',$type);
+		   	// $sth->bindParam(':type','choose');
+		   	$sth->bindParam(':question',$value['question'],PDO::PARAM_STR);
+		   	$sth->bindParam(':degree',$value['degree'],PDO::PARAM_STR);
+		   	$sth->bindParam(':source',$source,PDO::PARAM_STR);
+		   	$sth->bindParam(':unit',$unit);
+			$sth->execute();
+			$returnQuestion = $this->conn->lastInsertId();
+
+
+			$sql ="INSERT INTO `fillAnswer` (`questionID`, `answer`) VALUES (:questionID, :answer)";
+			$sth = $this->conn->prepare($sql);
+			   	// $sth->bindParam(':type',$type);
+			   	// $sth->bindParam(':type','choose');
+		   	$sth->bindParam(':questionID',$returnQuestion,PDO::PARAM_INT);
+		   	$sth->bindParam(':answer',$value['answer'],PDO::PARAM_STR);
+			$sth->execute();
+
+		}
+		$ack = array(
+			'status' => 'success'
+		);
+		return $ack;
+
+	}
+	function addQuestion($body){
+		$body=json_decode($body['data'],true);
+		$ask = $this->addAsk($body['ask'],$body['unit']);
+		$fill = $this->addFill($body['fill'],$body['unit']);
+		$choose = $this->addChoose($body['choose'],$body['unit'],$body['optionNum']);
+		$ack = array(
+				'ask' =>$ask ,
+				'fill' =>$fill ,
+				'choose' =>$choose 
+			);
+		return $ack;
+	}
+
+	function addChoose($question,$unit,$num){
+		// $body=json_decode($body['data'],true);
+		// return count($body['question']);
+		// try {
+			// var_dump(count($body['question'][0]));
+			if(count($question[0]) == 0){
+				$ack = array(
+					'status' => 'success'
+				);
+				return $ack;
+			}
+			
+		   foreach ($question as $key => $value) {
+				// var_dump($key,$value);
+				
+				if($value['type'] == '一般試題'){
+					$source = 'general';
+				}else if ($value['type'] == '歷屆試題'){
+					$source = 'previous';
+
+				}
+				// return ($value['question']);
+
+				$sql ="INSERT INTO `question` ( `type`, `question`, `degree`, `source`, `isMultiple`, `unitID`) VALUES ( 'choose', :question,:degree, :source, false, :unit)";
+				$sth = $this->conn->prepare($sql);
+			   	// $sth->bindParam(':type',$type);
+			   	// $sth->bindParam(':type','choose');
+			   	$sth->bindParam(':question',$value['question'],PDO::PARAM_STR);
+			   	$sth->bindParam(':degree',$value['degree'],PDO::PARAM_STR);
+			   	$sth->bindParam(':source',$source,PDO::PARAM_STR);
+			   	$sth->bindParam(':unit',$unit);
+				$sth->execute();
+				$returnQuestion = $this->conn->lastInsertId();
+				// $sth->commit();
+				// $row = $sth->fetchAll();
+				$optionNum = count($value)-4;
+				$tmpSql = 'INSERT INTO `selectOption` ( `selectID`, `content`, `isAnswer`) VALUES ( :selectID, :content, true)';
+				// return $tmpSql;
+
+				for( $i=1 ; $i <= $optionNum ; $i++ ) {
+					$tmpSql .= ",( :selectID".($i).", :content".($i).", false)";
+				}
+				// return $tmpSql;
+				$sth = $this->conn->prepare($tmpSql);
+				$parameter = [];
+				$parameter[':selectID'] = $returnQuestion;
+				$parameter[':content'] = $value['answer'];
+			   	// $sth->bindParam(':selectID',$returnQuestion,PDO::PARAM_INT);
+			   	// $sth->bindParam(':content',$value['answer'],PDO::PARAM_STR);
+			   		// var_dump($tmpSql);
+
+			   	for( $i=1 ; $i<=$optionNum ; $i++ ) {
+					$parameter[':selectID'.strval($i)] = $returnQuestion;
+					$parameter[':content'.strval($i)] = $value[strval($i)];
+
+			   		// $tmpStr = ':selectID'.strval($i);
+			   		// var_dump($tmpStr);
+				// 　  $sth->bindParam($tmpStr,$returnQuestion,PDO::PARAM_INT);
+					// $tmpStr = ':content'.strval($i);
+				//     $sth->bindParam($tmpStr,$value[strval($i)],PDO::PARAM_STR);
+				}
+				$sth->execute($parameter);
+
+
+				
+
+			}
+			$ack = array(
+				'status' => 'success'
+			);
+		// } catch (Exception $e) {
+		//     // echo 'Caught exception: ',  $e->getMessage(), "\n";
+		//     $ack = array(
+		// 		'status' => 'failed',
+		// 		'message' => $e
+		// 	);
+		// }
+		return $ack;
+
+	}
+
 	function getQuestion($unitID, $source){
 		
 		if($source == 'both'){
@@ -920,7 +1295,8 @@ Class File{
 			$sql = 'INSERT INTO `file` (`UID`, `fileName`, `fileNameClient`) VALUES ( :UID,:fileName,:fileNameClient)';
 			$sth = $this->conn->prepare($sql);
 			$sth->bindParam(':fileName',$filename,PDO::PARAM_STR);
-			$sth->bindParam(':fileNameClient',$uploadedFile->getClientFilename(),PDO::PARAM_STR);
+			$tmpFileName = $uploadedFile->getClientFilename();
+			$sth->bindParam(':fileNameClient',$tmpFileName,PDO::PARAM_STR);
 			$sth->bindParam(':UID',$_SESSION['id'],PDO::PARAM_STR);
 			$sth->execute();
 
@@ -928,7 +1304,7 @@ Class File{
 		    $result = array(
 		    	'status' => 'success',
 		    	'question' => $returnQuestion,
-	    		'extension' => exif_imagetype($uploadedFile->getClientFilename())
+	    		// 'extension' => exif_imagetype($uploadedFile->getClientFilename())
 		    );
 	    }else{
 		    $result = array(
@@ -947,14 +1323,16 @@ Class File{
 		$highestRow = $sheet->getHighestRow(); // 取得總列數
 		$highestcolumn = $sheet->getHighestColumn();
 		$highestcolumn = PHPExcel_Cell::columnIndexFromString($highestcolumn);
-		$highestChoose = $highestcolumn-2;
+		$highestChoose = $highestcolumn-4;
 		// echo '總共 '.$highestRow.' 列';
 		// echo '總共 '.$highestcolumn.' 欄';
 
 		$column_name[0]="question";
-		$column_name[1]="answer";
+		$column_name[3]="answer";
+		$column_name[1]="degree";
+		$column_name[2]="type";
 		$count = 1;
-		for ($row = 2; $row <= $highestcolumn; $row++) {
+		for ($row = 4; $row <= $highestcolumn; $row++) {
 			// var_dump($row);
 			$column_name[$row]=$count;
 			$count+=1;
@@ -984,7 +1362,10 @@ Class File{
 		$highestcolumn = $sheet->getHighestColumn();
 		$highestcolumn = PHPExcel_Cell::columnIndexFromString($highestcolumn);
 		$column_name[0]="question";
-		$column_name[1]="answer";
+		$column_name[1]="degree";
+		$column_name[2]="type";
+		$column_name[3]="answer";
+
 		$fill = array();
 		$excel_row_array=array();
 		for ($row = 2; $row <= $highestRow; $row++) {
@@ -999,6 +1380,9 @@ Class File{
 		$highestcolumn = $sheet->getHighestColumn();
 		$highestcolumn = PHPExcel_Cell::columnIndexFromString($highestcolumn);
 		$column_name[0]="question";
+		// $column_name[1]="answer";
+		$column_name[1]="degree";
+		$column_name[2]="type";
 		$ask = array();
 		$excel_row_array=array();
 		for ($row = 2; $row <= $highestRow; $row++) {
